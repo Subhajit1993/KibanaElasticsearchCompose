@@ -11,7 +11,6 @@ services:
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - "9200:9200"
-      - "9300:9300"
     networks:
       - elastic
     environment:
@@ -39,17 +38,27 @@ services:
       - elastic
     depends_on:
       - elasticsearch
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.3.2
+    volumes:
+      - ./logstash_config/:/usr/share/logstash/config/
+      - ./logstash_plugins/:/usr/share/logstash/pipeline/
+    ports:
+      - "5044:5044"
+      - "8080:8080"
+      - "9600:9600"
+    environment:
+        HTTP_HOST: 0.0.0.0
+        CONFIG_RELOAD_AUTOMATIC: "true"
+        CONFIG_RELOAD_INTERVAL: 3s
+        MONITORING_ENABLED: false
+        LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+      - kibana
 
 networks:
   elastic:
     driver: bridge
-
-volumes:
-  my-data:
-    driver_opts:
-      # Filesystem configuration
-      backup_policy: ENABLED
-      lifecycle_policy: AFTER_14_DAYS
-      performance_mode: maxIO
-      throughput_mode: provisioned
-      provisioned_throughput: 1

@@ -1,0 +1,4 @@
+config.reload.automatic: true
+config.reload.interval: 3s
+http.host: 0.0.0.0
+pipeline.ordered: auto
