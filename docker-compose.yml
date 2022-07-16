@@ -1,0 +1,55 @@
+version: '2'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.2
+    container_name: elasticsearch
+    # ulimits:
+    #   memlock:
+    #     soft: -1
+    #     hard: -1
+    volumes:
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elastic
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks
+      # see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+      xpack.security.enabled: false
+      # ELASTIC_PASSWORD: Lkj#098#098
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.2
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - "5601:5601"
+    environment:
+        ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+        SERVER_HOST: 0.0.0.0
+        SERVER_PORT: 5601
+        CONFIG_RELOAD_AUTOMATIC: "true"
+        CONFIG_RELOAD_INTERVAL: 3s
+        # ELASTICSEARCH_USERNAME: kibana_system
+        # KIBANA_PASSWORD: Lkj#098#098
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+
+networks:
+  elastic:
+    driver: bridge
+
+volumes:
+  my-data:
+    driver_opts:
+      # Filesystem configuration
+      backup_policy: ENABLED
+      lifecycle_policy: AFTER_14_DAYS
+      performance_mode: maxIO
+      throughput_mode: provisioned
+      provisioned_throughput: 1
